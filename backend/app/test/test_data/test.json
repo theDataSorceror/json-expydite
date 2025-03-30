@@ -1,0 +1,16 @@
+{"hello":[
+  "home",
+  "state",
+  "country", 
+  "world"
+],
+"goodbye":{
+    "lovers":[
+    ],
+     "friends":[
+        "Rick", 
+        "Bob"
+        ]
+     },
+"fu":"bar"    
+}

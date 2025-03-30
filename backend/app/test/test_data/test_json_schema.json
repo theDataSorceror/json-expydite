@@ -1,0 +1,38 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "type": "object",
+    "properties": {
+      "hello": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "goodbye": {
+        "type": "object",
+        "properties": {
+          "lovers": {
+            "type": "array"
+          },
+          "friends": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "friends",
+          "lovers"
+        ]
+      },
+      "fu": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "fu",
+      "goodbye",
+      "hello"
+    ]
+  }

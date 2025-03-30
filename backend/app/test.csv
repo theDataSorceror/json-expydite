@@ -1,0 +1,5 @@
+uid,name,array,type,Required,Default
+a0e1b008-b2ca-4e3c-a54a-4c65fe383a5b,hello,True,string,True,
+c55549f0-0ff5-42a6-9b1c-db1eb5f98c66,goodbye.lovers,True,,True,
+f6c2e77b-743c-4985-a655-cb67a5b583b7,goodbye.friends,True,string,True,
+8f868849-4200-4346-94c1-d9bbd3848267,fu,False,string,True,
