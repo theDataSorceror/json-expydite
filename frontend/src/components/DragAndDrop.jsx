@@ -1,62 +1,88 @@
-// frontend/src/components/DragAndDrop.jsx
 import React, { useState } from 'react';
-import { validateJSON } from '../services/api';  // Assume this function validates the JSON
 
 const DragAndDrop = ({ setJsonData, handleValidation }) => {
-  const [status, setStatus] = useState(null);  // Track the status (e.g., received, validated, error)
-  const [fileName, setFileName] = useState("");  // Track the file name for confirmation
+  const [isDragging, setIsDragging] = useState(false);
+  const [error, setError] = useState(null);
 
-  const onDrop = (e) => {
+  const handleDragEnter = (e) => {
     e.preventDefault();
-    const file = e.dataTransfer.files[0];  // Get the first file dropped
-
-    if (file && file.type === "application/json") {
-      setFileName(file.name);  // Store the file name for display
-      setStatus("Received");  // Update status to indicate file is received
-
-      const reader = new FileReader();
-      
-      reader.onload = async () => {
-        try {
-          const jsonContent = JSON.parse(reader.result);  // Parse the JSON file
-          setJsonData(jsonContent);  // Update jsonData in App.jsx
-          console.log(jsonContent)
-          // Validate the JSON via the backend
-          const validationResult = await validateJSON(jsonContent);
-          handleValidation(validationResult);  // Update the validation status in App.jsx
-          console.log(validationResult.isValid)
-          if (validationResult.isValid) {
-            setStatus("Valid JSON");  // Update status to indicate the JSON is valid
-          } else {
-            setStatus("Invalid JSON");  // Update status to indicate invalid JSON
-          }
-
-        } catch (error) {
-          console.error('Invalid JSON file');
-        }
-      };
-
-      reader.onerror = () => {
-        console.error('Error reading the file');
-      };
-
-      reader.readAsText(file);  // Read the file as text
-    }
+    setIsDragging(true);
+    console.log("Drag enter");
   };
 
-return (
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    console.log("Drag leave");
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+
+    // Log the file info for debugging
+    console.log("File dropped:", file);
+
+    if (!file) {
+      console.error("No file detected in drop event.");
+      setError("No file detected.");
+      return;
+    }
+
+    if (file.type !== 'application/json') {
+      console.error("Dropped file is not a valid JSON file. Type:", file.type);
+      setError("Please drop a valid JSON file.");
+      handleValidation({ isValid: false });
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      try {
+        // Parse the JSON content of the file
+        const parsedJson = JSON.parse(reader.result);
+        console.log("Parsed JSON:", parsedJson);
+
+        // Set the JSON data to parent state and notify parent of validation success
+        setJsonData(parsedJson);  // Update the parent state with the parsed JSON
+        handleValidation({ isValid: true });
+
+        // Clear any previous error states
+        setError(null);
+      } catch (err) {
+        console.error("Error parsing JSON:", err);
+        setError("Invalid JSON file. Please check the file format.");
+        handleValidation({ isValid: false });
+      }
+    };
+
+    reader.onerror = (err) => {
+      console.error("FileReader error:", err);
+      setError("Error reading the file.");
+      handleValidation({ isValid: false });
+    };
+
+    reader.readAsText(file);
+  };
+
+  return (
     <div
-      onDrop={onDrop}
-      onDragOver={(e) => e.preventDefault()}
-      style={{ border: '2px dashed #ccc', padding: '20px', width: '300px' }}
+      style={{
+        border: '2px dashed #cccccc',
+        padding: '20px',
+        textAlign: 'center',
+        backgroundColor: isDragging ? '#f0f0f0' : '#fff',
+      }}
+      onDragEnter={handleDragEnter}
+      onDragOver={(e) => e.preventDefault()} // To allow drop event
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
-      <p>Drag and drop a JSON file here.</p>
-
-      {/* Show the status message or confirmation */}
-      {status && <p><strong>Status:</strong> {status}</p>}
-
-      {/* Optionally, display the file name */}
-      {fileName && <p><strong>File: </strong>{fileName}</p>}
+      <h2>Drag and Drop a JSON File</h2>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {!error && <p>Drag and drop a JSON file here to validate and process.</p>}
     </div>
   );
 };

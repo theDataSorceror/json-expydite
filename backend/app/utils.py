@@ -26,7 +26,32 @@ def key_cleaner(key):
     return clean_key
 
 
+def empty_array_or_object_cleanup(clean_item, empty_object_warning):
+    if not empty_object_warning:
+        clean_item["Type"] = None
+    else:
+        clean_item["Type"] = "object"
+    return clean_item
+
+
+def clean_item_builder(clean_key, entry, expecting_data_type):
+    empty_object_warning = False
+    clean_item = {"uid": str(uuid4()), "Name": clean_key}
+    if entry == "array":
+        clean_item["Array"] = True
+        expecting_data_type = True
+    elif entry == "object":
+        clean_item["Array"] = False
+        expecting_data_type = True
+        empty_object_warning = True
+    else:
+        clean_item["Array"] = False
+        clean_item["Type"] = entry
+    return clean_item, expecting_data_type, empty_object_warning
+
+
 def flat_schema_adjuster(flattened: dict):
+    clean_item = {}
     clean_entries = {}
     entries_being_processed = []
     clean_entry_array = []
@@ -37,29 +62,37 @@ def flat_schema_adjuster(flattened: dict):
     key_in_process = adjustable_keys[-1]
 
     for key in adjustable_keys:
+        
         clean_key = key_cleaner(key)
         entry = flattened[key]
-        if "required" in key or entry == "object":
+
+        if entry in ["integer", "double", "float"]:
+            entry = "number" 
+
+        if "required" in key or "data" in key:
             continue
+
+        if key_in_process in key:
+            empty_object_warning = False
+            expecting_data_type = False
+
         if not loop_start and clean_key != key_in_process:
             key_counter = 0
             if key_counter == 0 and expecting_data_type:
-                clean_item["type"] = None
+                clean_item = empty_array_or_object_cleanup(clean_item, 
+                                                           empty_object_warning)
                 clean_entry_array.append(clean_item)
+
         if clean_key not in clean_entries.keys() and clean_key not in key_in_process:
             expecting_data_type = False
-            clean_item = {"uid": str(uuid4()), "name": clean_key}
-            if entry == "array":
-                clean_item["array"] = True
-                expecting_data_type = True
-            else:
-                clean_item["array"] = False
-                clean_item["type"] = entry
+            clean_item, expecting_data_type, empty_object_warning = clean_item_builder(
+                clean_key, entry, expecting_data_type
+            )
         else:
-            clean_item["type"] = entry
+            clean_item["Type"] = entry
             expecting_data_type = False
 
-        if "type" in clean_item.keys():
+        if "Type" in clean_item.keys():
             clean_entries[clean_key] = "processed"
             clean_entry_array.append(clean_item)
         if clean_key not in entries_being_processed:
@@ -68,6 +101,10 @@ def flat_schema_adjuster(flattened: dict):
         key_in_process = clean_key
         key_counter += 1
         loop_start = False
+
+    if "Type" not in clean_item.keys() and key == adjustable_keys[-1]:
+        clean_item = empty_array_or_object_cleanup(clean_item, empty_object_warning)
+        clean_entry_array.append(clean_item)
     return clean_entry_array
 
 

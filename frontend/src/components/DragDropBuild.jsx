@@ -1,25 +1,28 @@
-import React, { useState } from 'react';
-import DragAndDrop from './DragAndDrop';  // Your drag-and-drop component
-import InitiateModelButton from './InitiateModelButton';  // Import the InitiateModelButton component
+import React from 'react';
+import DragAndDrop from './DragAndDrop';
 
 const DragDropBuild = ({
-    jsonData,
-    setJsonData,
-    isJsonValidated,
-    handleValidation
-    }) => {
-    return (
-      <div>
-        {/* Show the drag-and-drop area */}
-        <DragAndDrop setJsonData={setJsonData} handleValidation={handleValidation} />
-
-        {/* Display the "Inspect Model" button, but it's disabled until JSON is validated */}
-        <InitiateModelButton 
-          jsonData={jsonData} 
-          isJsonValidated={isJsonValidated} 
-        />
-      </div>
-    );
-  };
+  jsonData,
+  setJsonData,
+  isJsonValidated,
+  handleValidation,
+}) => {
+  return (
+    <div>
+      {/* Show the drag-and-drop area */}
+      <DragAndDrop
+        setJsonData={setJsonData}
+        handleValidation={handleValidation}
+      />
+      
+      {/* Show validation status */}
+      {isJsonValidated && jsonData ? (
+        <p>JSON is valid and ready for further processing.</p>
+      ) : (
+        <p>Please upload a valid JSON file.</p>
+      )}
+    </div>
+  );
+};
 
 export default DragDropBuild;
