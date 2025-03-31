@@ -62,12 +62,12 @@ def flat_schema_adjuster(flattened: dict):
     key_in_process = adjustable_keys[-1]
 
     for key in adjustable_keys:
-        
+
         clean_key = key_cleaner(key)
         entry = flattened[key]
 
         if entry in ["integer", "double", "float"]:
-            entry = "number" 
+            entry = "number"
 
         if "required" in key or "data" in key:
             continue
@@ -79,8 +79,9 @@ def flat_schema_adjuster(flattened: dict):
         if not loop_start and clean_key != key_in_process:
             key_counter = 0
             if key_counter == 0 and expecting_data_type:
-                clean_item = empty_array_or_object_cleanup(clean_item, 
-                                                           empty_object_warning)
+                clean_item = empty_array_or_object_cleanup(
+                    clean_item, empty_object_warning
+                )
                 clean_entry_array.append(clean_item)
 
         if clean_key not in clean_entries.keys() and clean_key not in key_in_process:
@@ -124,8 +125,13 @@ def csv_string_writer(clean_array: list):
 def schema_to_flat_csv(json_schema: dict):
     flattened = flatten(json_schema, separator=".")
     adjusted_schema = flat_schema_adjuster(flattened)
-    for entry in adjusted_schema:
-        entry["Required"] = True
-        entry["Default"] = None
-    schema_csv = csv_string_writer(adjusted_schema)
+
+    clean_schema = []
+    for item in adjusted_schema:
+        if item != {"Type": "object"}:
+            clean_schema.append(item)
+            item["Required"] = True
+            item["Default"] = None
+
+    schema_csv = csv_string_writer(clean_schema)
     return schema_csv

@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local Development Files
+backend/app/__pycache__/utils.cpython-312.pyc
+backend/development.ipynb
