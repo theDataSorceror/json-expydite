@@ -10,15 +10,19 @@ from datamodel_code_generator.parser.jsonschema import JsonSchemaParser
 
 
 def json_to_json_schema(input_json):
-    input_dict = input_json.data
+    input_dict = input_json
     builder = SchemaBuilder()
     builder.add_object(input_dict)
     json_schema = builder.to_schema()
     return json_schema
 
 
-def key_cleaner(key):
-    clean_key = key.replace("properties", "")[1:]
+def key_cleaner(key, data_type):
+    if data_type=="object":
+        clean_key = key.replace("properties", "")[1:]
+    else:
+        clean_key = key.replace("items.", "")
+        clean_key = clean_key.replace("properties", "")[1:]
     clean_key = clean_key.replace("..", ".")
     clean_key = clean_key.replace(".type", "")
     clean_key = clean_key.replace("items", "")
@@ -50,7 +54,7 @@ def clean_item_builder(clean_key, entry, expecting_data_type):
     return clean_item, expecting_data_type, empty_object_warning
 
 
-def flat_schema_adjuster(flattened: dict):
+def flat_schema_adjuster(flattened: dict, data_type: str):
     clean_item = {}
     clean_entries = {}
     entries_being_processed = []
@@ -58,12 +62,18 @@ def flat_schema_adjuster(flattened: dict):
     loop_start = True
     expecting_data_type = False
     key_counter = 0
-    adjustable_keys = [key for key in flattened.keys() if key.startswith("properties")]
-    key_in_process = adjustable_keys[-1]
+    if data_type =="object":
+        adjustable_keys = [key for key in flattened.keys() if key.startswith("properties")] 
+    elif data_type=="array":
+        adjustable_keys = [key for key in flattened.keys() if key.startswith("items.properties")]
 
+    else:
+        return []
+    key_in_process = adjustable_keys[-1]
+        
     for key in adjustable_keys:
 
-        clean_key = key_cleaner(key)
+        clean_key = key_cleaner(key, data_type)
         entry = flattened[key]
 
         if entry in ["integer", "double", "float"]:
@@ -122,9 +132,11 @@ def csv_string_writer(clean_array: list):
     return csv_string
 
 
-def schema_to_flat_csv(json_schema: dict):
+def schema_to_flat_csv(json_schema: dict, data_type: str):
+
     flattened = flatten(json_schema, separator=".")
-    adjusted_schema = flat_schema_adjuster(flattened)
+    
+    adjusted_schema = flat_schema_adjuster(flattened, data_type)
 
     clean_schema = []
     for item in adjusted_schema:

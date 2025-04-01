@@ -1,0 +1,28 @@
+[{"hello":[
+    "home",
+    "state",
+    "country", 
+    "world"
+  ],
+  "goodbye":{
+       "friends":[
+          "Rick", 
+          "Bob"
+          ]
+       },
+  "fu":256,
+  "bar":{}   
+  },
+  {"hello":[
+    "world"
+  ],
+  "goodbye":{
+      "lovers":["Meliadoul"
+      ],
+       "friends":[
+          ]
+       },
+  "fu":128,
+  "bar":{}   
+  }
+]
