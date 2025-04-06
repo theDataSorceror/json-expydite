@@ -18,7 +18,7 @@ def json_to_json_schema(input_json):
 
 
 def key_cleaner(key, data_type):
-    if data_type=="object":
+    if data_type == "object":
         clean_key = key.replace("properties", "")[1:]
     else:
         clean_key = key.replace("items.", "")
@@ -62,15 +62,19 @@ def flat_schema_adjuster(flattened: dict, data_type: str):
     loop_start = True
     expecting_data_type = False
     key_counter = 0
-    if data_type =="object":
-        adjustable_keys = [key for key in flattened.keys() if key.startswith("properties")] 
-    elif data_type=="array":
-        adjustable_keys = [key for key in flattened.keys() if key.startswith("items.properties")]
+    if data_type == "object":
+        adjustable_keys = [
+            key for key in flattened.keys() if key.startswith("properties")
+        ]
+    elif data_type == "array":
+        adjustable_keys = [
+            key for key in flattened.keys() if key.startswith("items.properties")
+        ]
 
     else:
         return []
     key_in_process = adjustable_keys[-1]
-        
+
     for key in adjustable_keys:
 
         clean_key = key_cleaner(key, data_type)
@@ -135,7 +139,7 @@ def csv_string_writer(clean_array: list):
 def schema_to_flat_csv(json_schema: dict, data_type: str):
 
     flattened = flatten(json_schema, separator=".")
-    
+
     adjusted_schema = flat_schema_adjuster(flattened, data_type)
 
     clean_schema = []
@@ -147,3 +151,48 @@ def schema_to_flat_csv(json_schema: dict, data_type: str):
 
     schema_csv = csv_string_writer(clean_schema)
     return schema_csv
+
+
+def type_mismatch(label, data):
+    error = False
+    if label == "number":
+        try:
+            float(data)
+        except:
+            if data != "":
+                error = True
+    elif label == "boolean" and data not in ["True", "False", ""]:
+        error = True
+    elif label == "array" and data != [] and data != "":
+        error = True
+    elif label == "object" and data != {} and data != "":
+        error = True
+    else:
+        pass
+    return error
+
+
+def error_reporter(csv_string):
+    string_array = csv_string.split("\n")
+    string_array = [string.replace("\r", "") for string in string_array]
+    type_index = string_array[0].split(",").index("Type")
+    default_index = string_array[0].split(",").index("Default")
+
+    all_errors = []
+    type_errors = []
+    mismatch_errors = []
+    i = 1
+    for entry in string_array[1:-1]:
+        values = entry.split(",")
+        if values[type_index] == "":
+            type_errors.append(f"Missing datatype on row {i}")
+            i += 1
+            continue
+        if type_mismatch(values[type_index], values[default_index]):
+            mismatch_errors.append(f"Type and Default mismatch on row {i}")
+        i += 1
+
+    all_errors.extend(type_errors)
+    all_errors.extend(mismatch_errors)
+
+    return all_errors

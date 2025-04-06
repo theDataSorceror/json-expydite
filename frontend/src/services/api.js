@@ -45,3 +45,29 @@ export const buildModel = async (jsonData) => {
         throw new Error("Error building model");
     }
 };
+
+export const publishTableData = async (csvString) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/publishTableData`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",  // Updated to match the expected response
+        },
+        body: JSON.stringify({ csvData: csvString }), // Wrap CSV string in a JSON object
+      });
+  
+      // Check if the response is ok
+      if (!response.ok) {
+        throw new Error(`Failed to publish model: ${response.statusText}`);
+      }
+  
+      // Parse the JSON response from the backend
+      const responseData = await response.json();
+      console.log(responseData); // Log response to debug
+  
+      return responseData; // Return the parsed JSON response
+    } catch (error) {
+      console.error("Publish failed:", error);
+      throw error; // Re-throw error to be handled in the calling function
+    }
+  };
