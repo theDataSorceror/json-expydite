@@ -38,9 +38,9 @@ def empty_array_or_object_cleanup(clean_item, empty_object_warning):
     return clean_item
 
 
-def clean_item_builder(clean_key, entry, expecting_data_type):
+def clean_item_builder(clean_key, uuid, entry, expecting_data_type):
     empty_object_warning = False
-    clean_item = {"uid": str(uuid4()), "Name": clean_key}
+    clean_item = {"uid": uuid, "Name": clean_key}
     if entry == "array":
         clean_item["Array"] = True
         expecting_data_type = True
@@ -55,6 +55,7 @@ def clean_item_builder(clean_key, entry, expecting_data_type):
 
 
 def flat_schema_adjuster(flattened: dict, data_type: str):
+    metadata = {}
     clean_item = {}
     clean_entries = {}
     entries_being_processed = []
@@ -73,17 +74,22 @@ def flat_schema_adjuster(flattened: dict, data_type: str):
 
     else:
         return []
-    key_in_process = adjustable_keys[-1]
 
+    unused_keys = [key for key in flattened.keys() if key not in adjustable_keys]
+    for key in unused_keys:
+        metadata[str(uuid4())] = {key: flattened[key]}
+
+    key_in_process = adjustable_keys[-1]
     for key in adjustable_keys:
 
         clean_key = key_cleaner(key, data_type)
         entry = flattened[key]
 
-        if entry in ["integer", "double", "float"]:
-            entry = "number"
+        # if entry in ["integer", "double", "float"]:
+        #     entry = "number"
 
         if "required" in key or "data" in key:
+            metadata[str(uuid4())] = {key: flattened[key]}
             continue
 
         if key_in_process in key:
@@ -100,10 +106,13 @@ def flat_schema_adjuster(flattened: dict, data_type: str):
 
         if clean_key not in clean_entries.keys() and clean_key not in key_in_process:
             expecting_data_type = False
+            uuid = str(uuid4())
+            metadata[uuid] = {key: flattened[key]}
             clean_item, expecting_data_type, empty_object_warning = clean_item_builder(
-                clean_key, entry, expecting_data_type
+                clean_key, uuid, entry, expecting_data_type
             )
         else:
+            metadata[str(uuid4())] = {key: flattened[key]}
             clean_item["Type"] = entry
             expecting_data_type = False
 
@@ -120,7 +129,7 @@ def flat_schema_adjuster(flattened: dict, data_type: str):
     if "Type" not in clean_item.keys() and key == adjustable_keys[-1]:
         clean_item = empty_array_or_object_cleanup(clean_item, empty_object_warning)
         clean_entry_array.append(clean_item)
-    return clean_entry_array
+    return clean_entry_array, metadata
 
 
 def csv_string_writer(clean_array: list):
@@ -137,12 +146,9 @@ def csv_string_writer(clean_array: list):
 
 
 def schema_to_flat_csv(json_schema: dict, data_type: str):
-
-    flattened = flatten(json_schema, separator=".")
-
-    adjusted_schema = flat_schema_adjuster(flattened, data_type)
-
     clean_schema = []
+    flattened = flatten(json_schema, separator=".")
+    adjusted_schema, metadata = flat_schema_adjuster(flattened, data_type)
     for item in adjusted_schema:
         if item != {"Type": "object"}:
             clean_schema.append(item)
@@ -150,7 +156,7 @@ def schema_to_flat_csv(json_schema: dict, data_type: str):
             item["Default"] = None
 
     schema_csv = csv_string_writer(clean_schema)
-    return schema_csv
+    return schema_csv, metadata
 
 
 def type_mismatch(label, data):
