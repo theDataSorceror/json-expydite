@@ -34,12 +34,11 @@ export const buildModel = async (jsonData) => {
         }
 
         console.log("Full Response Headers:", response.headers);
-
         if (!response.ok) {
             throw new Error(`Server responded with ${response.status}`);
         }
-
-        return await response.json();
+        const result = await response.json();
+        return result;
     } catch (error) {
         console.error("API Error:", error);
         throw new Error("Error building model");
@@ -64,7 +63,7 @@ export const publishTableData = async (csvString) => {
       // Parse the JSON response from the backend
       const responseData = await response.json();
       console.log(responseData); // Log response to debug
-  
+      console.log(responseData.metadata)
       return responseData; // Return the parsed JSON response
     } catch (error) {
       console.error("Publish failed:", error);

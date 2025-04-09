@@ -40,16 +40,30 @@ async def validate_json(input_data: JSONInput):
 async def inspect_schema(input_json: JSONInput):
     data_type = "object"
     schema = json_to_json_schema(input_json.data)
-    csv_schema = schema_to_flat_csv(schema, data_type)
-    return {"message": "Schema defined successfully", "data": csv_schema}
+    csv_schema, metadata = schema_to_flat_csv(schema, data_type)
+    return JSONResponse(
+        content={
+            "success": True,
+            "message": "Schema defined successfully",
+            "data": csv_schema,
+            "metadata": metadata,
+        }
+    )
 
 
 @router.post("/buildModelArray")
 async def build_model_array(data: List[Any] = Body(...)):
     data_type = "array"
     schema = json_to_json_schema(data)
-    csv_schema = schema_to_flat_csv(schema, data_type)
-    return {"message": "Schema defined successfully", "data": csv_schema}
+    csv_schema, metadata = schema_to_flat_csv(schema, data_type)
+    return JSONResponse(
+        content={
+            "success": True,
+            "message": "Schema defined successfully",
+            "data": csv_schema,
+            "metadata": metadata,
+        }
+    )
 
 
 @router.post("/publishTableData")
@@ -59,7 +73,7 @@ async def publish_table_data(request: PublishRequest):
         csv_string = request.csvData
 
         validation_errors = error_reporter(csv_string)
-        if len(validation_errors)>0:
+        if len(validation_errors) > 0:
             return JSONResponse(
                 status_code=200, content={"success": False, "errors": validation_errors}
             )
@@ -76,7 +90,7 @@ async def publish_table_data(request: PublishRequest):
             content={
                 "message": "Model finalized successfully",
                 "data": "",
-                "success":True
+                "success": True,
             },
             status_code=200,
         )
